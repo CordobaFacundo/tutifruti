@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { setUserName } from '../store/userSlice';
+import { setIsHost, setUserName } from '../store/userSlice';
 
 
 export const Login = () => {
@@ -28,6 +28,7 @@ export const Login = () => {
     }
     
     dispatch(setUserName(name));
+    dispatch(setIsHost(name.toLowerCase() === 'facundo'))
     toast.success(`Adentro ${name}`)
     navigate('/lobby');
   }

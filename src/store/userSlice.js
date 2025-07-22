@@ -1,7 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-    name: '',
+    userName: '',
+    isHost: false,
 };
 
 export const userSlice = createSlice({
@@ -9,13 +10,16 @@ export const userSlice = createSlice({
     initialState,
     reducers: {
         setUserName: (state, action) => {
-            state.name = action.payload;
+            state.userName = action.payload;
         },
         clearUser: (state) => {
-            state.name = '';
+            state.userName = '';
+        },
+        setIsHost: (state, action) => {
+            state.isHost = action.payload;
         },
     },
 })
 
-export const { setUserName, clearUser } = userSlice.actions;
+export const { setUserName, clearUser, setIsHost } = userSlice.actions;
 export default userSlice.reducer;

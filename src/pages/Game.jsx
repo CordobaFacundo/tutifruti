@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { setUserPoints } from '../store/userSlice';
 import { updatePlayerPoints } from '../store/playersSlice';
+import { Navbar } from '../components/Navbar';
 
 export const Game = () => {
 
@@ -23,6 +23,8 @@ export const Game = () => {
   const [respuestas, setRespuestas] = useState(Array(campos.length).fill(''));
   const [points, setPoints] = useState(0);
   const [pointsFields, setPointsFields] = useState(Array(campos.length).fill(false));
+  const [currentLetter, setCurrentLetter] = useState(''); // Aquí podrías implementar la lógica para obtener una letra aleatoria
+  const [lasLetter, setLasLetter] = useState([]);
 
   const handleInputChange = (index, value) => {
     const nuevasRespuestas = [...respuestas];
@@ -43,15 +45,31 @@ export const Game = () => {
     dispatch(updatePlayerPoints({ name: userName, points }));
     navigate('/score');
   }
+  
+  // Simula la obtención de una letra aleatoria
+  useEffect(() => {
+    if (fase === 'jugar' && currentLetter === '') {
+      generateNewLatter(); // Genera una nueva letra al entrar en la fase de puntuar
+    }
+  }, [fase])
+
+  const generateNewLatter = () => {
+    const letter = getRandomLetter();
+    setCurrentLetter(letter);
+    setLasLetter(prev => [letter, ...prev].slice(0, 5)); // Guarda las últimas 5 letras
+  }
+
+  const getRandomLetter = () => {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const available = alphabet.filter(letter => !lasLetter.includes(letter));
+    const options = available.length > 0 ? available : alphabet;
+    return options[Math.floor(Math.random() * options.length)];
+  }
+  
 
   return (
     <div className="container py-4">
-      {/* NAVBAR SUPERIOR SIMPLIFICADA */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div><strong>Tiempo:</strong> --:--</div>
-        <div><strong>Letra:</strong> A</div>
-        <div><strong>Puntaje:</strong> {points} </div>
-      </div>
+      <Navbar currentLetter={currentLetter} points={points} />
 
       {/* CAMPOS DEL JUEGO */}
       {campos.map((campo, index) => (

@@ -1,6 +1,4 @@
 import { createSlice } from "@reduxjs/toolkit";
-import reducer from "./userSlice"
-
 
 const initialState = {
     players: [],

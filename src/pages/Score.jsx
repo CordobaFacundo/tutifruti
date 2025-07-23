@@ -6,7 +6,6 @@ import { resetPointsUser } from '../store/userSlice';
 
 export const Score = () => {
 
-  const playerPoints = useSelector((state) => state.user.points);
   const players = useSelector((state) => state.players.players);
   const navigate = useNavigate();
   const dispatch = useDispatch();

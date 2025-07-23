@@ -7,6 +7,7 @@ import { resetPointsUser } from '../store/userSlice';
 export const Score = () => {
 
   const players = useSelector((state) => state.players.players);
+  const isHost = useSelector((state) => state.user.isHost);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   
@@ -42,14 +43,17 @@ export const Score = () => {
         ))}
       </ul>
 
-      <div className='text-center'>
-        <button className="btn btn-primary mt-3" onClick={handleNewRound}>
-          🔄 Jugar otra ronda
-        </button>
-        <button className='btn btn-primary mt-3 ms-2' onClick={handleFinalizeGame}>
-          Finalizar partida 
-        </button>
-      </div>
+      {isHost && (
+        <div className='text-center'>
+          <button className="btn btn-primary mt-3" onClick={handleNewRound}>
+            🔄 Jugar otra ronda
+          </button>
+          <button className='btn btn-primary mt-3 ms-2' onClick={handleFinalizeGame}>
+            Finalizar partida 
+          </button>
+        </div>
+      )}
+
 
     </div>
   );

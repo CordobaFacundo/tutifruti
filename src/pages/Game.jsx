@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { updatePlayerPoints } from '../store/playersSlice';
 import { Navbar } from '../components/Navbar';
+import { toast } from 'react-toastify';
 
 export const Game = () => {
 
@@ -10,7 +11,8 @@ export const Game = () => {
   const navigate = useNavigate();
   
   const userName = useSelector((state) => state.user.userName);
-  const [fase, setFase] = useState('jugar'); // 'jugar' o 'puntuar'
+  const isHost = useSelector((state) => state.user.isHost);
+  const [phase, setPhase] = useState('play'); // 'play' o 'score'
   const campos = [
     'Jugador argentino',
     'Jugador retirado',
@@ -25,6 +27,7 @@ export const Game = () => {
   const [pointsFields, setPointsFields] = useState(Array(campos.length).fill(false));
   const [currentLetter, setCurrentLetter] = useState(''); // Aquí podrías implementar la lógica para obtener una letra aleatoria
   const [lasLetter, setLasLetter] = useState([]);
+  const [timeLeft, setTimeLeft] = useState(60); // Tiempo inicial de 60 segundos
 
   const handleInputChange = (index, value) => {
     const nuevasRespuestas = [...respuestas];
@@ -33,7 +36,7 @@ export const Game = () => {
   };
 
   const handlePoints = (index, cant) => {
-    if (pointsFields[index]) return; // Evita puntuar más de una vez
+    if (pointsFields[index]) return; // Evita score más de una vez
     setPoints(points + cant);
 
     const newPointsFields = [...pointsFields];
@@ -48,10 +51,10 @@ export const Game = () => {
   
   // Simula la obtención de una letra aleatoria
   useEffect(() => {
-    if (fase === 'jugar' && currentLetter === '') {
-      generateNewLatter(); // Genera una nueva letra al entrar en la fase de puntuar
+    if (phase === 'play' && currentLetter === '') {
+      generateNewLatter(); // Genera una nueva letra al entrar en la phase de score
     }
-  }, [fase])
+  }, [phase])
 
   const generateNewLatter = () => {
     const letter = getRandomLetter();
@@ -66,10 +69,37 @@ export const Game = () => {
     return options[Math.floor(Math.random() * options.length)];
   }
   
+  // Temporizador
+  useEffect(() => {
+    if( phase !== 'play') return; // No iniciar el temporizador si no estamos en la phase de play
+
+    setTimeLeft(60); // Reinicia el tiempo al iniciar la phase de play
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          toast.info('⏰ ¡Se acabó el tiempo!', {
+            position: "top-center",
+            autoClose: 3000,
+          });
+
+          setTimeout(() => {
+            setPhase('score'); 
+          }, 0);
+
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer); // Limpia el temporizador al desmontar el componente
+  }, [phase]);
 
   return (
     <div className="container py-4">
-      <Navbar currentLetter={currentLetter} points={points} />
+      <Navbar currentLetter={currentLetter} points={points} timeLeft={timeLeft} />
 
       {/* CAMPOS DEL JUEGO */}
       {campos.map((campo, index) => (
@@ -79,11 +109,11 @@ export const Game = () => {
             type="text"
             className="form-control mb-2"
             placeholder={`Escribi un ${campo.toLowerCase()}`}
-            disabled={fase === 'puntuar'}
+            disabled={phase === 'score'}
             onChange={(e) => handleInputChange(index, e.target.value)}
           />
 
-          {fase === 'puntuar' && (
+          {phase === 'score' && (
             <div className="btn-group">
               <button
                 className={"btn btn-success mx-2"}
@@ -110,10 +140,11 @@ export const Game = () => {
         </div>
       ))}
 
-      {fase === 'jugar' ? (
+      {isHost && (
+        phase === 'play' ? (
         <button
           className="btn btn-primary w-100"
-          onClick={() => setFase('puntuar')}
+          onClick={() => setPhase('score')}
         >
           Ver puntajes
         </button>
@@ -124,8 +155,7 @@ export const Game = () => {
         >
           Finalizar ronda
         </button>
-      )}
-
+      ))}
     </div>
   );
 };

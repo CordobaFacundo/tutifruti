@@ -1,8 +1,5 @@
 import React from 'react'
-import { Login } from '../pages/Login'
-import { Score } from '../pages/Score'
-import { Lobby } from '../pages/Lobby'
-import { Game } from '../pages/Game'
+import { Login, Score, Lobby, Game } from '../pages'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 export const AppRouter = () => {

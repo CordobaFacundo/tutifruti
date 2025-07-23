@@ -21,9 +21,12 @@ export const userSlice = createSlice({
         },
         setUserPoints: (state, action) => {
             state.points = action.payload;
-        }
+        },
+        resetPointsUser: (state) => {
+            state.points = 0;
+        },
     },
 })
 
-export const { setUserName, clearUser, setIsHost, setUserPoints } = userSlice.actions;
+export const { setUserName, clearUser, setIsHost, setUserPoints, resetPointsUser } = userSlice.actions;
 export default userSlice.reducer;

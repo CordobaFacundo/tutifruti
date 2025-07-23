@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { setUserPoints } from '../store/userSlice';
+import { updatePlayerPoints } from '../store/playersSlice';
 
 export const Game = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
+  
+  const userName = useSelector((state) => state.user.userName);
   const [fase, setFase] = useState('jugar'); // 'jugar' o 'puntuar'
   const campos = [
     'Jugador argentino',
@@ -38,8 +40,8 @@ export const Game = () => {
   }
 
   const handleScore = () => {
+    dispatch(updatePlayerPoints({ name: userName, points }));
     navigate('/score');
-    dispatch(setUserPoints(points));
   }
 
   return (

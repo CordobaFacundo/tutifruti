@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { setIsHost, setUserName } from '../store/userSlice';
+import { addPlayer } from '../store/playersSlice';
 
 
 export const Login = () => {
@@ -16,7 +17,7 @@ export const Login = () => {
     if( name.trim().length === 0 ) {
       toast.error('Pone el nombre!', {
         position: "bottom-right",
-        autoClose: 5000,
+        autoClose: 2500,
         hideProgressBar: false,
         closeOnClick: false,
         pauseOnHover: true,
@@ -29,6 +30,7 @@ export const Login = () => {
     
     dispatch(setUserName(name));
     dispatch(setIsHost(name.toLowerCase() === 'facundo'))
+    dispatch(addPlayer({ id: 'abc123', name, points: 0 }));
     toast.success(`Adentro ${name}`)
     navigate('/lobby');
   }

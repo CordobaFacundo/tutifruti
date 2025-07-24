@@ -1,8 +1,8 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { resetAllPoints, updatePlayerPoints } from '../store/playersSlice';
-import { useEffect } from 'react';
+import { resetAllPoints } from '../store/playersSlice';
 import { resetPointsUser } from '../store/userSlice';
+import { incrementRound, resetGame, setCurrentLetter, setPhase } from '../store/gameSlice';
 
 export const Score = () => {
 
@@ -12,12 +12,16 @@ export const Score = () => {
   const dispatch = useDispatch();
   
   const handleNewRound = () => {
-    navigate('/lobby');
+    dispatch(setPhase('play'));
+    dispatch(setCurrentLetter('')); 
+    dispatch(incrementRound()); 
+    navigate('/game');
   };
 
   const handleFinalizeGame = () => {
     dispatch(resetAllPoints());
     dispatch(resetPointsUser());
+    dispatch(resetGame());
     navigate('/lobby');
   }
 

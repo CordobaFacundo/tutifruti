@@ -5,9 +5,12 @@ import { toast } from 'react-toastify';
 import { setIsHost, setUserName, setUserId } from '../store/userSlice';
 import { addPlayer } from '../store/playersSlice';
 import socket from '../socket/socket';
+import { useParams } from 'react-router-dom';
 
 
 export const Login = () => {
+
+  const { roomId } = useParams(); // Obtenemos el roomId de la URL
 
   useEffect(() => {
     socket.on('connect', () => {
@@ -39,6 +42,8 @@ export const Login = () => {
       });
       return;
     }
+
+    const actualRoomId = roomId || 'sala123'; // Si no hay roomId en la URL, usamos uno por defecto
     
     dispatch(setUserName(name));
     dispatch(setUserId(socket.id)); // Guardamos el ID del socket como userId
@@ -46,12 +51,11 @@ export const Login = () => {
     dispatch(setIsHost(name.toLowerCase() === 'facundo'))
     dispatch(addPlayer({ id: socket.id, name, points: 0 }));
     toast.success(`Adentro ${name}`)
-    const roomId = 'sala123';
     socket.emit('join_room', {
-      roomId: 'sala123', //temporal
+      roomId: actualRoomId || 'sala123', 
       name: name
     });
-    navigate('/lobby');
+    navigate(`/sala/${actualRoomId}/lobby`);
   }
 
   return (

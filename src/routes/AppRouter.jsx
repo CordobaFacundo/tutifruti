@@ -6,10 +6,11 @@ export const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path='/sala/:roomId' element={<Login />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/score" element={<Score />} />
-        <Route path="/lobby" element={<Lobby />} />
-        <Route path="/game" element={<Game />} />
+        <Route path="/sala/:roomId/lobby" element={<Lobby />} />
+        <Route path="/sala/:roomId/game" element={<Game />} />
+        <Route path="/sala/:roomId/score" element={<Score />} />
         {/* Ruta por defecto */}
         <Route path="/*" element={<Navigate to="/login" />} />
       </Routes>

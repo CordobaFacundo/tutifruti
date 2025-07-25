@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { updatePlayerPoints } from '../store/playersSlice';
 import { Navbar } from '../components/Navbar';
 import { toast } from 'react-toastify';
@@ -10,6 +10,7 @@ export const Game = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { roomId } = useParams(); // Obtenemos el roomId de la URL
   
   const userName = useSelector((state) => state.user.userName);
   const isHost = useSelector((state) => state.user.isHost);
@@ -48,7 +49,7 @@ export const Game = () => {
 
   const handleScore = () => {
     dispatch(updatePlayerPoints({ name: userName, points }));
-    navigate('/score');
+    navigate(`/sala/${roomId}/score`);
   }
   
   // Simula la obtención de una letra aleatoria

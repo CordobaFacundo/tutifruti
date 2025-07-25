@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { setPlayers } from '../store/playersSlice';
 import socket from '../socket/socket';
 
@@ -8,13 +8,25 @@ export const Lobby = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { roomId } = useParams(); // Obtenemos el roomId de la URL
   const { userName, isHost, userId } = useSelector((state) => state.user);
   const players = useSelector((state) => state.players.players);
   console.log('Jugadores recibidos en Redux:', players);
 
   const handleStart = () => {
-    navigate('/game');
+    socket.emit('start_game', roomId);
   }
+
+  useEffect(() => {
+    socket.on('navigate_to_game', () => {
+      navigate(`/sala/${roomId}/game`);
+    });
+  
+    return () => {
+      socket.off('navigate_to_game'); // Limpiamos el listener al desmontar
+    }
+  }, [])
+  
 
   return (
     <div className="d-flex align-items-center justify-content-center" style={{ minHeight: '100vh' }}>

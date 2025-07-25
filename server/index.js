@@ -41,6 +41,11 @@ io.on('connection', (socket) => {
     console.log('Enviando jugadores:', playersPerRoom[roomId]);
   });
 
+  socket.on('start_game', (roomId) => {
+    console.log(`El host ha iniciado la partida en la sala: ${roomId}`);
+    io.to(roomId).emit('navigate_to_game');
+  });
+
   //Evento para cuando se desconecta un jugador
   socket.on('disconnect', () => {
     console.log('❌ Jugador desconectado:', socket.id);

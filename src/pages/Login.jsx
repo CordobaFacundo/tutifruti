@@ -46,6 +46,11 @@ export const Login = () => {
     dispatch(setIsHost(name.toLowerCase() === 'facundo'))
     dispatch(addPlayer({ id: socket.id, name, points: 0 }));
     toast.success(`Adentro ${name}`)
+    const roomId = 'sala123';
+    socket.emit('join_room', {
+      roomId: 'sala123', //temporal
+      name: name
+    });
     navigate('/lobby');
   }
 

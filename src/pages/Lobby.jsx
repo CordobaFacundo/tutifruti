@@ -1,11 +1,16 @@
-import React from 'react'
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { setPlayers } from '../store/playersSlice';
+import socket from '../socket/socket';
 
 export const Lobby = () => {
 
   const navigate = useNavigate();
-  const {userName, isHost} = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+  const { userName, isHost, userId } = useSelector((state) => state.user);
+  const players = useSelector((state) => state.players.players);
+  console.log('Jugadores recibidos en Redux:', players);
 
   const handleStart = () => {
     navigate('/game');
@@ -22,8 +27,15 @@ export const Lobby = () => {
           <div className="mb-4">
             <h5>Jugadores en la sala:</h5>
             <ul className="list-group">
-              <li className="list-group-item list-group-item-success">{userName} (vos)</li>
-              {/* Más adelante, acá se agregan los demás jugadores */}
+              {players.map((player) => (
+                <li
+                  key={player.id}
+                  className={`list-group-item ${player.id === userId ? 'list-group-item-success' : ''
+                    }`}
+                >
+                  {player.name} {player.id === userId ? '(vos)' : ''}
+                </li>
+              ))}
             </ul>
           </div>
 

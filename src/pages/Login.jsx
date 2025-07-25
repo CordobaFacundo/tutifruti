@@ -1,12 +1,24 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { setIsHost, setUserName } from '../store/userSlice';
+import { setIsHost, setUserName, setUserId } from '../store/userSlice';
 import { addPlayer } from '../store/playersSlice';
+import socket from '../socket/socket';
 
 
 export const Login = () => {
+
+  useEffect(() => {
+    socket.on('connect', () => {
+      console.log('🟢 Conectado al servidor: ', socket.id);
+    })
+
+    return () => {
+      socket.off('connect'); //Limpiamos el listener al desmontar
+    }
+  }, []);
+  
 
   const [name, setName] = useState('');
   const navigate = useNavigate();
@@ -29,8 +41,10 @@ export const Login = () => {
     }
     
     dispatch(setUserName(name));
+    dispatch(setUserId(socket.id)); // Guardamos el ID del socket como userId
+    // Si el nombre es "facundo", lo marcamos como host
     dispatch(setIsHost(name.toLowerCase() === 'facundo'))
-    dispatch(addPlayer({ id: 'abc123', name, points: 0 }));
+    dispatch(addPlayer({ id: socket.id, name, points: 0 }));
     toast.success(`Adentro ${name}`)
     navigate('/lobby');
   }

@@ -1,8 +1,10 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { resetAllPoints } from '../store/playersSlice';
+import { resetAllPoints, setPlayers } from '../store/playersSlice';
 import { resetPointsUser } from '../store/userSlice';
 import { incrementRound, resetGame, setCurrentLetter, setPhase } from '../store/gameSlice';
+import { useEffect } from 'react';
+import socket from '../socket/socket';
 
 export const Score = () => {
 
@@ -26,6 +28,17 @@ export const Score = () => {
   }
 
   const sorted = [...players].sort((a, b) => b.points - a.points);
+
+  useEffect(() => {
+    socket.on('players_updated', (players) => {
+      dispatch(setPlayers(players));
+    });
+  
+    return () => {
+      socket.off('players_updated'); 
+    }
+  }, [dispatch])
+  
 
   return (
     <div className="container text-center mt-5">

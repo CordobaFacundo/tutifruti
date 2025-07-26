@@ -13,9 +13,10 @@ export const Game = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { roomId } = useParams(); // Obtenemos el roomId de la URL
-  
+
   const userName = useSelector((state) => state.user.userName);
   const isHost = useSelector((state) => state.user.isHost);
+  const userId = useSelector((state) => state.user.userId);
   const phase = useSelector((state) => state.game.phase);
   const currentLetter = useSelector((state) => state.game.currentLetter);
   const letterHistory = useSelector((state) => state.game.letterHistory);
@@ -33,6 +34,7 @@ export const Game = () => {
   const [points, setPoints] = useState(0);
   const [pointsFields, setPointsFields] = useState(Array(campos.length).fill(false));
   const [timeLeft, setTimeLeft] = useState(60); // Tiempo inicial de 60 segundos
+  const [hasSentPoints, setHasSentPoints] = useState(false);
 
   const handleInputChange = (index, value) => {
     const nuevasRespuestas = [...respuestas];
@@ -55,17 +57,23 @@ export const Game = () => {
   }
 
   const handleScore = () => {
-    dispatch(updatePlayerPoints({ name: userName, points }));
     socket.emit('navigate_to_score', { roomId });
   }
-  
+
+  const handleSendPoints = () => {
+    socket.emit('update_points', { roomId, playerId: userId, points });
+    setHasSentPoints(true);
+  }
+
+  //SECTOR DE LOS USEFFECTS
+
   // Simula la obtención de una letra aleatoria
   useEffect(() => {
     if (phase !== 'play' || !isHost || currentLetter !== '') return;
-    
+
     const letter = getRandomLetter(letterHistory);
     socket.emit('new_letter', { roomId, letter });
-    
+
   }, [phase, isHost, currentLetter, roomId, letterHistory]);
 
   // Escucha el evento de nueva letra desde el servidor
@@ -84,7 +92,7 @@ export const Game = () => {
     socket.on('phase_updated', (newPhase) => {
       dispatch(setPhase(newPhase));
     })
-  
+
     return () => {
       socket.off('phase_updated');
     }
@@ -100,11 +108,11 @@ export const Game = () => {
       socket.off('navigate_to_score');
     }
   }, [navigate, roomId]);
-  
-  
+
+
   // Temporizador
   useEffect(() => {
-    if( phase !== 'play') return; // No iniciar el temporizador si no estamos en la phase de play
+    if (phase !== 'play') return; // No iniciar el temporizador si no estamos en la phase de play
 
     setTimeLeft(60); // Reinicia el tiempo al iniciar la phase de play
 
@@ -127,12 +135,6 @@ export const Game = () => {
     return () => clearInterval(timer); // Limpia el temporizador al desmontar el componente
   }, [phase, roomId]);
 
-  //A borrar
-/*   useEffect(() => {
-    if(timeLeft === 0 && phase === 'play') {
-      dispatch(setPhase('score'));
-    }
-  }, [timeLeft, phase, dispatch]); */
 
   return (
     <div className="container py-4">
@@ -185,6 +187,22 @@ export const Game = () => {
         >
           Terminar
         </button>
+      )}
+
+      {phase === 'score' && !hasSentPoints && (
+        <button
+          className="btn btn-primary w-100 mt-3"
+          onClick={handleSendPoints}
+          disabled={pointsFields.filter(v => v).length < campos.length}
+        >
+          Confirmar puntos
+        </button>
+      )}
+
+      {phase === 'score' && hasSentPoints && (
+        <div className="alert alert-info mt-3">
+          Puntos enviados. Esperando a que el host finalice la ronda...
+        </div>
       )}
 
       {/* Solo el host puede finalizar la ronda (navega a score)*/}

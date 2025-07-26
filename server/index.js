@@ -38,7 +38,6 @@ io.on('connection', (socket) => {
 
     // Emitir un evento a todos los jugadores en la sala
     io.to(roomId).emit('players_updated', playersPerRoom[roomId]);
-    console.log('Enviando jugadores:', playersPerRoom[roomId]);
   });
 
   socket.on('start_game', (roomId) => {
@@ -51,13 +50,29 @@ io.on('connection', (socket) => {
   });
 
   socket.on('change_phase', ({ roomId, phase }) => {
-    console.log(`Recibi pedido de cambiar a fase: ${phase} en la sala: ${roomId}`);
     io.to(roomId).emit('phase_updated', phase);
   });
 
   socket.on('navigate_to_score', ({ roomId }) => {
   io.to(roomId).emit('navigate_to_score');
-});
+  });
+
+  //Evento para actualizar puntos de un jugador
+  socket.on('update_points', ({ roomId, playerId, points }) => {
+    console.log(`Recibi puntos del jugador ${playerId}: ${points}`);
+
+    if(!playersPerRoom[roomId]) return;
+    
+    //Actualizar los puntos del jugador
+    const player = playersPerRoom[roomId].find(p => p.id === playerId);
+    if (player) {
+      player.points += points;
+    }
+
+    io.to(roomId).emit('players_updated', playersPerRoom[roomId]);
+    console.log(`Puntos actualizados para ${player.name}: ${player.points} pts`);
+      
+  })
 
   //Evento para cuando se desconecta un jugador
   socket.on('disconnect', () => {

@@ -4,7 +4,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { updatePlayerPoints } from '../store/playersSlice';
 import { Navbar } from '../components/Navbar';
 import { toast } from 'react-toastify';
-import { setPhase, generateLetter } from '../store/gameSlice';
+import { setPhase, setCurrentLetter } from '../store/gameSlice';
+import socket from '../socket/socket';
+import { getRandomLetter } from '../utils/letterGenerator';
 
 export const Game = () => {
 
@@ -54,10 +56,24 @@ export const Game = () => {
   
   // Simula la obtención de una letra aleatoria
   useEffect(() => {
-    if (phase === 'play' && currentLetter === '') {
-      dispatch(generateLetter()); // Genera una nueva letra
-    }
-  }, [phase, currentLetter]);
+    if (phase !== 'play' || !isHost || currentLetter !== '') return;
+    
+    const letter = getRandomLetter(letterHistory);
+    socket.emit('new_letter', { roomId, letter });
+    
+  }, [phase, isHost, currentLetter, roomId, letterHistory]);
+
+  // Escucha el evento de nueva letra desde el servidor
+  useEffect(() => {
+    socket.on('set_letter', (letter) => {
+      dispatch(setCurrentLetter(letter));
+    });
+
+    return () => {
+      socket.off('set_letter');
+    };
+  }, [dispatch]);
+  
   
   // Temporizador
   useEffect(() => {
@@ -137,7 +153,7 @@ export const Game = () => {
           className="btn btn-primary w-100"
           onClick={() => dispatch(setPhase('score')) }
         >
-          Ver puntajes
+          Terminar
         </button>
       ) : (
         <button

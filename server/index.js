@@ -46,6 +46,10 @@ io.on('connection', (socket) => {
     io.to(roomId).emit('navigate_to_game');
   });
 
+  socket.on('new_letter', ({ roomId, letter }) => {
+    io.to(roomId).emit('set_letter', letter);
+  });
+
   //Evento para cuando se desconecta un jugador
   socket.on('disconnect', () => {
     console.log('❌ Jugador desconectado:', socket.id);

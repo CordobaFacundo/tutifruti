@@ -31,21 +31,8 @@ export const gameSlice = createSlice({
             state.roundNumber = 1;
             state.letterHistory = [];
         },
-        generateLetter: (state) => {
-            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWYZ'.split('');
-            const available = alphabet.filter(letter => !state.letterHistory.includes(letter));
-            const options = available.length > 0 ? available : alphabet;
-            const letter = options[Math.floor(Math.random() * options.length)];
-            
-            state.currentLetter = letter;
-            state.letterHistory.push(letter);
-
-            if (state.letterHistory.length > 8) {
-                state.letterHistory.shift();
-            }
-        }
     }
 });
 
-export const { setPhase, setCurrentLetter, incrementRound, resetGame, generateLetter } = gameSlice.actions;
+export const { setPhase, setCurrentLetter, incrementRound, resetGame } = gameSlice.actions;
 export default gameSlice.reducer;

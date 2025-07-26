@@ -49,9 +49,14 @@ export const Game = () => {
     setPointsFields(newPointsFields);
   }
 
+  //Sincronizar fase para todos cuando cualquier jugador termine
+  const handleEndPlay = () => {
+    socket.emit('change_phase', { roomId, phase: 'score' });
+  }
+
   const handleScore = () => {
     dispatch(updatePlayerPoints({ name: userName, points }));
-    navigate(`/sala/${roomId}/score`);
+    socket.emit('navigate_to_score', { roomId });
   }
   
   // Simula la obtención de una letra aleatoria
@@ -73,6 +78,28 @@ export const Game = () => {
       socket.off('set_letter');
     };
   }, [dispatch]);
+
+  // Escucha el evento de cambio de fase desde el servidor
+  useEffect(() => {
+    socket.on('phase_updated', (newPhase) => {
+      dispatch(setPhase(newPhase));
+    })
+  
+    return () => {
+      socket.off('phase_updated');
+    }
+  }, [dispatch])
+
+  //Escucha el evento de navegación a score
+  useEffect(() => {
+    socket.on('navigate_to_score', () => {
+      navigate(`/sala/${roomId}/score`);
+    });
+
+    return () => {
+      socket.off('navigate_to_score');
+    }
+  }, [navigate, roomId]);
   
   
   // Temporizador
@@ -89,6 +116,8 @@ export const Game = () => {
             position: "top-center",
             autoClose: 3000,
           });
+          //Cuando termina el tiempo, todos los jugadores pasan a la phase de score
+          socket.emit('change_phase', { roomId, phase: 'score' });
           return 0;
         }
         return prev - 1;
@@ -96,13 +125,14 @@ export const Game = () => {
     }, 1000);
 
     return () => clearInterval(timer); // Limpia el temporizador al desmontar el componente
-  }, [phase]);
+  }, [phase, roomId]);
 
-  useEffect(() => {
+  //A borrar
+/*   useEffect(() => {
     if(timeLeft === 0 && phase === 'play') {
       dispatch(setPhase('score'));
     }
-  }, [timeLeft, phase, dispatch]);
+  }, [timeLeft, phase, dispatch]); */
 
   return (
     <div className="container py-4">
@@ -147,22 +177,27 @@ export const Game = () => {
         </div>
       ))}
 
-      {isHost && (
-        phase === 'play' ? (
+      {/* Cualquier jugador puede terminar el tiempo y pasar a score */}
+      {phase === 'play' && (
         <button
-          className="btn btn-primary w-100"
-          onClick={() => dispatch(setPhase('score')) }
+          className='btn btn-primary w-100'
+          onClick={handleEndPlay}
         >
           Terminar
         </button>
-      ) : (
+      )}
+
+      {/* Solo el host puede finalizar la ronda (navega a score)*/}
+      {isHost && phase === 'score' && (
         <button
-          className="btn btn-success w-100"
+          className='btn btn-success w-100'
           onClick={handleScore}
         >
           Finalizar ronda
         </button>
-      ))}
+      )}
+
+
     </div>
   );
 };

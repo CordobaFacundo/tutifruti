@@ -50,6 +50,15 @@ io.on('connection', (socket) => {
     io.to(roomId).emit('set_letter', letter);
   });
 
+  socket.on('change_phase', ({ roomId, phase }) => {
+    console.log(`Recibi pedido de cambiar a fase: ${phase} en la sala: ${roomId}`);
+    io.to(roomId).emit('phase_updated', phase);
+  });
+
+  socket.on('navigate_to_score', ({ roomId }) => {
+  io.to(roomId).emit('navigate_to_score');
+});
+
   //Evento para cuando se desconecta un jugador
   socket.on('disconnect', () => {
     console.log('❌ Jugador desconectado:', socket.id);

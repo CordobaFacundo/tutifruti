@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { updatePlayerPoints } from '../store/playersSlice';
 import { Navbar } from '../components/Navbar';
 import { toast } from 'react-toastify';
 import { setPhase, setCurrentLetter } from '../store/gameSlice';
@@ -61,9 +60,11 @@ export const Game = () => {
   }
 
   const handleSendPoints = () => {
+    console.log('Enviando puntos:', points);
     socket.emit('update_points', { roomId, playerId: userId, points });
     setHasSentPoints(true);
   }
+
 
   //SECTOR DE LOS USEFFECTS
 
@@ -135,6 +136,15 @@ export const Game = () => {
     return () => clearInterval(timer); // Limpia el temporizador al desmontar el componente
   }, [phase, roomId]);
 
+  useEffect(() => {
+    if (phase === 'play') {
+      setRespuestas(Array(campos.length).fill(''));
+      setPoints(0);
+      setPointsFields(Array(campos.length).fill(false));
+      setHasSentPoints(false);
+    } 
+  }, [phase]);
+  
 
   return (
     <div className="container py-4">

@@ -14,13 +14,6 @@ export const playersSlice = createSlice({
         removePlayer: (state, action) => {
             state.players = state.players.filter(player => player.id !== action.payload);
         },
-        updatePlayerPoints: (state, action) => {
-            const { name, points } = action.payload;
-            const player = state.players.find(player => player.name === name);
-            if (player) {
-                player.points += points;
-            }
-        },
         resetAllPoints: (state) => {
             state.players.forEach(player => {
                 player.points = 0;
@@ -32,5 +25,5 @@ export const playersSlice = createSlice({
     }
 })
 
-export const { addPlayer, removePlayer, updatePlayerPoints, resetAllPoints, setPlayers } = playersSlice.actions;
+export const { addPlayer, removePlayer, resetAllPoints, setPlayers } = playersSlice.actions;
 export default playersSlice.reducer;

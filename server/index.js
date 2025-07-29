@@ -59,20 +59,32 @@ io.on('connection', (socket) => {
 
   //Evento para actualizar puntos de un jugador
   socket.on('update_points', ({ roomId, playerId, points }) => {
-    console.log(`Recibi puntos del jugador ${playerId}: ${points}`);
-
+    console.log('Backend recibe:', { roomId, playerId, points });
     if(!playersPerRoom[roomId]) return;
     
-    //Actualizar los puntos del jugador
     const player = playersPerRoom[roomId].find(p => p.id === playerId);
     if (player) {
+      console.log('encontro jugador:', player);
       player.points += points;
+    } else {
+      console.log('Jugador no encontrado:');
     }
 
+    io.to(roomId).emit('players_updated', playersPerRoom[roomId]);  
+  });
+
+  socket.on('new_round', ({ roomId }) => {
+    io.to(roomId).emit('start_new_round');
     io.to(roomId).emit('players_updated', playersPerRoom[roomId]);
-    console.log(`Puntos actualizados para ${player.name}: ${player.points} pts`);
-      
-  })
+  });
+
+  socket.on('end_game', ({ roomId }) => {
+    if(playersPerRoom[roomId]) {
+      playersPerRoom[roomId].forEach(p => p.points = 0);
+    }
+    io.to(roomId).emit('players_updated', playersPerRoom[roomId]);
+    io.to(roomId).emit('end_game');
+  });
 
   //Evento para cuando se desconecta un jugador
   socket.on('disconnect', () => {

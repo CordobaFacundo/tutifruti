@@ -17,10 +17,6 @@ export const gameSlice = createSlice({
         },
         setCurrentLetter: (state, action) => {
             state.currentLetter = action.payload;
-            state.letterHistory.push(action.payload);
-            if (state.letterHistory.length > 8) {
-                state.letterHistory.shift(); // Mantiene solo las últimas 8 letras
-            }
         },
         incrementRound: (state) => {
             state.roundNumber += 1;

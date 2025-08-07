@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const { pickAndPushLetter } = require('./utils/letterGenerator');
 
 //Configurar servidor Express
 const app = express();
@@ -17,7 +18,9 @@ const io = new Server(server, {
   }
 });
 
-const playersPerRoom = {}; //{ roomId: [{ id, name}] }
+const playersPerRoom = {}; 
+const letterHistoryPerRoom = {}; 
+const currentLetterPerRoom = {};
 
 //Evento de conexión de Socket.IO
 io.on('connection', (socket) => {
@@ -42,11 +45,12 @@ io.on('connection', (socket) => {
 
   socket.on('start_game', (roomId) => {
     console.log(`El host ha iniciado la partida en la sala: ${roomId}`);
+    const letter = pickAndPushLetter(roomId, letterHistoryPerRoom);
+    currentLetterPerRoom[roomId] = letter;
+    console.log(`Letra inicial: ${letter}`);
     io.to(roomId).emit('navigate_to_game');
-  });
-
-  socket.on('new_letter', ({ roomId, letter }) => {
-    io.to(roomId).emit('set_letter', letter);
+    io.to(roomId).emit('start_new_round', {letter});
+    io.to(roomId).emit('players_updated', playersPerRoom[roomId]);
   });
 
   socket.on('change_phase', ({ roomId, phase }) => {
@@ -64,7 +68,6 @@ io.on('connection', (socket) => {
     
     const player = playersPerRoom[roomId].find(p => p.id === playerId);
     if (player) {
-      console.log('encontro jugador:', player);
       player.points += points;
     } else {
       console.log('Jugador no encontrado:');
@@ -74,7 +77,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('new_round', ({ roomId }) => {
-    io.to(roomId).emit('start_new_round');
+    const letter = pickAndPushLetter(roomId, letterHistoryPerRoom);
+    console.log(`Enviando letra: ${letter}`);
+    currentLetterPerRoom[roomId] = letter;
+    io.to(roomId).emit('start_new_round', { letter });
     io.to(roomId).emit('players_updated', playersPerRoom[roomId]);
   });
 
@@ -85,6 +91,10 @@ io.on('connection', (socket) => {
     io.to(roomId).emit('players_updated', playersPerRoom[roomId]);
     io.to(roomId).emit('end_game');
   });
+
+  socket.on('get_current_letter', (roomId, cb) => {
+    cb(currentLetterPerRoom[roomId] || '');
+  })
 
   //Evento para cuando se desconecta un jugador
   socket.on('disconnect', () => {

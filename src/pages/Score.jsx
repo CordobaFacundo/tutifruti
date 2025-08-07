@@ -1,6 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { setPlayers } from '../store/playersSlice';
 import { resetPointsUser } from '../store/userSlice';
 import { incrementRound, resetGame, setCurrentLetter, setPhase } from '../store/gameSlice';
 import { useEffect } from 'react';
@@ -20,9 +19,9 @@ export const Score = () => {
   }
 
   useEffect(() => {
-    socket.on('start_new_round', () => {
+    socket.on('start_new_round', ({ letter }) => {
+      dispatch(setCurrentLetter(letter));
       dispatch(setPhase('play'));
-      dispatch(setCurrentLetter(''));
       dispatch(incrementRound());
       navigate(`/sala/${roomId}/game`);
     });
@@ -34,8 +33,8 @@ export const Score = () => {
 
   useEffect(() => {
     socket.on('end_game', () => {
-      dispatch(resetPointsUser && resetPointsUser());
-      dispatch(resetGame && resetGame());
+      dispatch(resetPointsUser());
+      dispatch(resetGame());
       navigate(`/sala/${roomId}/lobby`);
     })
 
@@ -54,7 +53,6 @@ export const Score = () => {
   }
   
   const sorted = [...players].sort((a, b) => b.points - a.points);
-  console.log('Jugadores en Score:', players);
 
   return (
     <div className="container text-center mt-5">

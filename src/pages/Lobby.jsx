@@ -11,7 +11,6 @@ export const Lobby = () => {
   const { roomId } = useParams(); // Obtenemos el roomId de la URL
   const { userName, isHost, userId } = useSelector((state) => state.user);
   const players = useSelector((state) => state.players.players);
-  console.log('Jugadores recibidos en Redux:', players);
 
   const handleStart = () => {
     socket.emit('start_game', roomId);

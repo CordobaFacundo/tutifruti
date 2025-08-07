@@ -5,7 +5,6 @@ import { Navbar } from '../components/Navbar';
 import { toast } from 'react-toastify';
 import { setPhase, setCurrentLetter } from '../store/gameSlice';
 import socket from '../socket/socket';
-import { getRandomLetter } from '../utils/letterGenerator';
 
 export const Game = () => {
 
@@ -13,12 +12,10 @@ export const Game = () => {
   const navigate = useNavigate();
   const { roomId } = useParams(); // Obtenemos el roomId de la URL
 
-  const userName = useSelector((state) => state.user.userName);
   const isHost = useSelector((state) => state.user.isHost);
   const userId = useSelector((state) => state.user.userId);
   const phase = useSelector((state) => state.game.phase);
   const currentLetter = useSelector((state) => state.game.currentLetter);
-  const letterHistory = useSelector((state) => state.game.letterHistory);
 
   const campos = [
     'Jugador argentino',
@@ -60,7 +57,6 @@ export const Game = () => {
   }
 
   const handleSendPoints = () => {
-    console.log('Enviando puntos:', points);
     socket.emit('update_points', { roomId, playerId: userId, points });
     setHasSentPoints(true);
   }
@@ -68,23 +64,21 @@ export const Game = () => {
 
   //SECTOR DE LOS USEFFECTS
 
-  // Simula la obtención de una letra aleatoria
-  useEffect(() => {
-    if (phase !== 'play' || !isHost || currentLetter !== '') return;
-
-    const letter = getRandomLetter(letterHistory);
-    socket.emit('new_letter', { roomId, letter });
-
-  }, [phase, isHost, currentLetter, roomId, letterHistory]);
-
   // Escucha el evento de nueva letra desde el servidor
   useEffect(() => {
-    socket.on('set_letter', (letter) => {
+    socket.on('start_new_round', ({ letter }) => {
+      console.log('Letra recibida del servidor:', letter);
       dispatch(setCurrentLetter(letter));
+      dispatch(setPhase('play'));
+      setRespuestas(Array(campos.length).fill(''));
+      setPoints(0);
+      setPointsFields(Array(campos.length).fill(false));
+      setHasSentPoints(false);
+      setTimeLeft(60);
     });
 
     return () => {
-      socket.off('set_letter');
+      socket.off('start_new_round');
     };
   }, [dispatch]);
 
@@ -115,7 +109,7 @@ export const Game = () => {
   useEffect(() => {
     if (phase !== 'play') return; // No iniciar el temporizador si no estamos en la phase de play
 
-    setTimeLeft(60); // Reinicia el tiempo al iniciar la phase de play
+    //setTimeLeft(60); // Reinicia el tiempo al iniciar la phase de play
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -137,13 +131,15 @@ export const Game = () => {
   }, [phase, roomId]);
 
   useEffect(() => {
-    if (phase === 'play') {
-      setRespuestas(Array(campos.length).fill(''));
-      setPoints(0);
-      setPointsFields(Array(campos.length).fill(false));
-      setHasSentPoints(false);
-    } 
-  }, [phase]);
+    if(!currentLetter) {
+      socket.emit('get_current_letter', roomId, (letter) => {
+        if(letter) {
+          dispatch(setCurrentLetter(letter));
+        }
+      });
+    }
+  
+  }, [currentLetter, dispatch, roomId]);
   
 
   return (

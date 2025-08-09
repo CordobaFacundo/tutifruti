@@ -12,10 +12,8 @@ export const Game = () => {
   const navigate = useNavigate();
   const { roomId } = useParams(); // Obtenemos el roomId de la URL
 
-  const isHost = useSelector((state) => state.user.isHost);
-  const userId = useSelector((state) => state.user.userId);
-  const phase = useSelector((state) => state.game.phase);
-  const currentLetter = useSelector((state) => state.game.currentLetter);
+  const { isHost, userId } = useSelector((state) => state.user);
+  const { phase, currentLetter } = useSelector((state) => state.game);
 
   const campos = [
     'Jugador argentino',
@@ -177,6 +175,7 @@ export const Game = () => {
               <button
                 className={"btn btn-danger mx-2"}
                 onClick={() => handlePoints(index, 0)}
+                disabled={pointsFields[index]}
               >
                 0
               </button>

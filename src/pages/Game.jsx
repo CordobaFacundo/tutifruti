@@ -17,12 +17,12 @@ export const Game = () => {
 
   const campos = [
     'Jugador argentino',
+    'Jugador actual extranjero',
     'Jugador retirado',
-    'Jugador actual',
     'Selección nacional',
     'Club',
-    'Ganador de Champions League',
-    'Ganador del Mundial',
+    'Jugador ganador de Champions League',
+    'Jugador ganador del Mundial',
   ];
   const [respuestas, setRespuestas] = useState(Array(campos.length).fill(''));
   const [points, setPoints] = useState(0);

@@ -5,6 +5,7 @@ import { Navbar } from '../components/Navbar';
 import { toast } from 'react-toastify';
 import { setPhase, setCurrentLetter } from '../store/gameSlice';
 import socket from '../socket/socket';
+import { PlayPhase, ScorePhase } from '../components/gamePhases';
 
 export const Game = () => {
 
@@ -24,18 +25,14 @@ export const Game = () => {
     'Jugador ganador de Champions League',
     'Jugador ganador del Mundial',
   ];
+  //Estados
   const [respuestas, setRespuestas] = useState(Array(campos.length).fill(''));
   const [points, setPoints] = useState(0);
   const [pointsFields, setPointsFields] = useState(Array(campos.length).fill(false));
   const [timeLeft, setTimeLeft] = useState(60); // Tiempo inicial de 60 segundos
   const [hasSentPoints, setHasSentPoints] = useState(false);
 
-  const handleInputChange = (index, value) => {
-    const nuevasRespuestas = [...respuestas];
-    nuevasRespuestas[index] = value;
-    setRespuestas(nuevasRespuestas);
-  };
-
+  //Handlers
   const handlePoints = (index, cant) => {
     if (pointsFields[index]) return; // Evita score más de una vez
     setPoints(points + cant);
@@ -144,83 +141,29 @@ export const Game = () => {
     <div className="container py-4">
       <Navbar currentLetter={currentLetter} points={points} timeLeft={timeLeft} />
 
-      {/* CAMPOS DEL JUEGO */}
-      {campos.map((campo, index) => (
-        <div key={index} className="mb-3">
-          <label className="form-label">{campo}</label>
-          <input
-            type="text"
-            className="form-control mb-2"
-            placeholder={`Escribi un ${campo.toLowerCase()}`}
-            disabled={phase === 'score'}
-            onChange={(e) => handleInputChange(index, e.target.value)}
-          />
-
-          {phase === 'score' && (
-            <div className="btn-group">
-              <button
-                className={"btn btn-success mx-2"}
-                onClick={() => handlePoints(index, 10)}
-                disabled={respuestas[index].trim().length <= 1 || pointsFields[index]}
-              >
-                +10
-              </button>
-              <button
-                className={"btn btn-warning mx-2"}
-                onClick={() => handlePoints(index, 5)}
-                disabled={respuestas[index].trim().length <= 1 || pointsFields[index]}
-              >
-                +5
-              </button>
-              <button
-                className={"btn btn-danger mx-2"}
-                onClick={() => handlePoints(index, 0)}
-                disabled={pointsFields[index]}
-              >
-                0
-              </button>
-            </div>
-          )}
-        </div>
-      ))}
-
-      {/* Cualquier jugador puede terminar el tiempo y pasar a score */}
-      {phase === 'play' && (
-        <button
-          className='btn btn-primary w-100'
-          onClick={handleEndPlay}
-        >
-          Terminar
-        </button>
+      { phase === 'play' && (
+        <PlayPhase
+          campos={campos}
+          respuestas={respuestas}
+          setRespuestas={setRespuestas}
+          handleEndPlay={handleEndPlay}
+          timeLeft={timeLeft}
+        />
       )}
-
-      {phase === 'score' && !hasSentPoints && (
-        <button
-          className="btn btn-primary w-100 mt-3"
-          onClick={handleSendPoints}
-          disabled={pointsFields.filter(v => v).length < campos.length}
-        >
-          Confirmar puntos
-        </button>
+      
+      { phase === 'score' && (
+        <ScorePhase
+          campos={campos}
+          respuestas={respuestas}
+          points={points}
+          pointsFields={pointsFields}
+          handlePoints={handlePoints}
+          handleSendPoints={handleSendPoints}
+          hasSentPoints={hasSentPoints}
+          handleScore={handleScore}
+          isHost={isHost}
+        />
       )}
-
-      {phase === 'score' && hasSentPoints && (
-        <div className="alert alert-info mt-3">
-          Puntos enviados. Esperando a que el host finalice la ronda...
-        </div>
-      )}
-
-      {/* Solo el host puede finalizar la ronda (navega a score)*/}
-      {isHost && phase === 'score' && (
-        <button
-          className='btn btn-success w-100'
-          onClick={handleScore}
-        >
-          Finalizar ronda
-        </button>
-      )}
-
-
     </div>
   );
 };

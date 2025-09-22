@@ -31,6 +31,7 @@ export const Game = () => {
   const [pointsFields, setPointsFields] = useState(Array(campos.length).fill(false));
   const [timeLeft, setTimeLeft] = useState(60); // Tiempo inicial de 60 segundos
   const [hasSentPoints, setHasSentPoints] = useState(false);
+  const [allResponses, setAllResponses] = useState([])
 
   //Handlers
   const handlePoints = (index, cant) => {
@@ -44,7 +45,7 @@ export const Game = () => {
 
   //Sincronizar fase para todos cuando cualquier jugador termine
   const handleEndPlay = () => {
-    socket.emit('change_phase', { roomId, phase: 'score' });
+    socket.emit('force_end_play', roomId);
   }
 
   const handleScore = () => {
@@ -99,6 +100,14 @@ export const Game = () => {
     }
   }, [navigate, roomId]);
 
+  useEffect(() => {
+    socket.on("all_responses", (data) => {
+      setAllResponses(data);
+    })
+  
+    return () => socket.off("all_responses");
+   }, []);
+  
 
   // Temporizador
   useEffect(() => {
@@ -115,7 +124,7 @@ export const Game = () => {
             autoClose: 3000,
           });
           //Cuando termina el tiempo, todos los jugadores pasan a la phase de score
-          socket.emit('change_phase', { roomId, phase: 'score' });
+          socket.emit('force_end_play', roomId);
           return 0;
         }
         return prev - 1;
@@ -135,6 +144,19 @@ export const Game = () => {
     }
   
   }, [currentLetter, dispatch, roomId]);
+
+  useEffect(() => {
+    socket.on('force_end_play', () => {
+      console.log('⚡ Recibido force_end_play, enviando respuestas y cambiando a score...');
+      socket.emit('send_responses', { roomId, playerId: userId, respuestas });
+      socket.emit('change_phase', { roomId, phase: 'score' });
+    });
+  
+    return () => {
+      socket.off('force_end_play');
+    }
+  }, [roomId, userId, respuestas])
+  
   
 
   return (
@@ -153,9 +175,11 @@ export const Game = () => {
       
       { phase === 'score' && (
         <ScorePhase
+          allResponses={allResponses}
           campos={campos}
           respuestas={respuestas}
           points={points}
+          userId={userId}
           pointsFields={pointsFields}
           handlePoints={handlePoints}
           handleSendPoints={handleSendPoints}

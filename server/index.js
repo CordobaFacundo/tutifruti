@@ -53,8 +53,28 @@ io.on('connection', (socket) => {
     io.to(roomId).emit('players_updated', playersPerRoom[roomId]);
   });
 
+  socket.on('send_responses', ({ roomId, playerId, respuestas }) => {
+    console.log(`📩 Respuestas recibidas de ${playerId} en sala ${roomId}:`, respuestas);
+    
+    if(!playersPerRoom[roomId]) return;
+
+    const player = playersPerRoom[roomId].find(p => p.id === playerId);
+    if(player) {
+      player.responses = respuestas;
+      io.to(roomId).emit('all_responses', playersPerRoom[roomId]);
+    } else {
+      console.log(`Jugador ${playerId} no encontrado en la sala ${roomId}`);
+      return;
+    }
+  });
+
   socket.on('change_phase', ({ roomId, phase }) => {
     io.to(roomId).emit('phase_updated', phase);
+  });
+
+  socket.on('force_end_play', (roomId) => {
+    console.log('Se recibio force_end_play en la sala:', roomId);
+    io.to(roomId).emit('force_end_play');
   });
 
   socket.on('navigate_to_score', ({ roomId }) => {

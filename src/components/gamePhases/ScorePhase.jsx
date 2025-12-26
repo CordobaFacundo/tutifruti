@@ -86,7 +86,7 @@ export const ScorePhase = ({
                               {/* Feedback del puntaje asignado */}
                               {pointsFields[campoIndex] != null && (
                                 <div className="mt-1 small text-muted">
-                                  {pointsFields[campoIndex]} pts asignados
+                                  {pointsFields[campoIndex]}
                                 </div>
                               )}
                             </div>
@@ -103,21 +103,13 @@ export const ScorePhase = ({
 
       {/* 🔹 Botones debajo de las tablas */}
       {!hasSentPoints && (
-        <>
-          {pointsFields.filter((v) => v != null).length < campos.length && (
-            <div className="alert alert-warning mt-3 text-center py-2">
-              ⚠️ Falta puntuar alguna categoría para poder confirmar.
-            </div>
-          )}
-
-          <button
-            className="btn btn-primary w-100 mt-3"
-            onClick={handleSendPoints}
-            disabled={pointsFields.filter((v) => v != null).length < campos.length}
-          >
-            Confirmar puntos
-          </button>
-        </>
+        <button
+          className="btn btn-primary w-100 mt-3"
+          onClick={handleSendPoints}
+          disabled={pointsFields.filter((v) => v != null).length < campos.length}
+        >
+          Confirmar puntos
+        </button>
       )}
 
       {hasSentPoints && (

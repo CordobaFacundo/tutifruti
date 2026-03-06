@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
-import { toast } from 'react-toastify';
 import { setPhase, setCurrentLetter } from '../store/gameSlice';
 import socket from '../socket/socket';
 import { PlayPhase, ScorePhase } from '../components/gamePhases';
@@ -29,9 +28,15 @@ export const Game = () => {
   const [respuestas, setRespuestas] = useState(Array(campos.length).fill(''));
   const [points, setPoints] = useState(0);
   const [pointsFields, setPointsFields] = useState(Array(campos.length).fill(false));
-  const [timeLeft, setTimeLeft] = useState(60); // Tiempo inicial de 60 segundos
+  const [timeLeft, setTimeLeft] = useState(90);
   const [hasSentPoints, setHasSentPoints] = useState(false);
   const [allResponses, setAllResponses] = useState([])
+  const timerIntervalRef = useRef(null); // Referencia para el intervalo del temporizador
+  const respuestasRef = useRef(respuestas); // Referencia para las respuestas
+
+  useEffect(() => {
+    respuestasRef.current = respuestas;
+  }, [respuestas]);
 
   //Handlers
   const handlePoints = (index, cant) => {
@@ -70,7 +75,7 @@ export const Game = () => {
       setPoints(0);
       setPointsFields(Array(campos.length).fill(false));
       setHasSentPoints(false);
-      setTimeLeft(60);
+      //setTimeLeft(60);
     });
 
     return () => {
@@ -109,30 +114,61 @@ export const Game = () => {
    }, []);
   
 
-  // Temporizador
+  //Timer
+  //El servidor envia endsAt, el front solo lo usa para mostar el tiempo visualmente
   useEffect(() => {
-    if (phase !== 'play') return; // No iniciar el temporizador si no estamos en la phase de play
+    const handleTimerStarted = ({ endsAt }) => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
 
-    //setTimeLeft(60); // Reinicia el tiempo al iniciar la phase de play
+      setTimeLeft(Math.max(0, Math.ceil((endsAt - Date.now()) / 1000)));
 
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          toast.info('⏰ ¡Se acabó el tiempo!', {
-            position: "top-center",
-            autoClose: 3000,
-          });
-          //Cuando termina el tiempo, todos los jugadores pasan a la phase de score
-          socket.emit('force_end_play', roomId);
-          return 0;
+      timerIntervalRef.current = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+        setTimeLeft(remaining);
+
+        if (remaining <= 0) {
+          clearInterval(timerIntervalRef.current);
+          timerIntervalRef.current = null;
         }
-        return prev - 1;
-      });
-    }, 1000);
+      }, 1000);
+    }
 
-    return () => clearInterval(timer); // Limpia el temporizador al desmontar el componente
-  }, [phase, roomId]);
+    socket.on('round_timer_started', handleTimerStarted);
+
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+      socket.off('round_timer_started', handleTimerStarted);
+    }
+  }, [roomId]);
+
+  // Al montar el componente, consultar si hay un timer activo en el servidor
+  // Esto resuelve el caso donde el host navega a /game y se pierde el round_timer_started
+  useEffect(() => {
+    socket.emit('get_timer', roomId, (data) => {
+      if (data?.endsAt) {
+        if (timerIntervalRef.current) {
+          clearInterval(timerIntervalRef.current);
+          timerIntervalRef.current = null;
+        }
+        setTimeLeft(Math.max(0, Math.ceil((data.endsAt - Date.now()) / 1000)));
+        timerIntervalRef.current = setInterval(() => {
+          const remaining = Math.max(0, Math.ceil((data.endsAt - Date.now()) / 1000));
+          setTimeLeft(remaining);
+          if (remaining <= 0) {
+            clearInterval(timerIntervalRef.current);
+            timerIntervalRef.current = null;
+          }
+        }, 1000);
+      }
+    });
+  }, [roomId]); // Solo se ejecuta al montar
+
 
   useEffect(() => {
     if(!currentLetter) {
@@ -145,18 +181,22 @@ export const Game = () => {
   
   }, [currentLetter, dispatch, roomId]);
 
+
   useEffect(() => {
-    socket.on('force_end_play', () => {
-      console.log('⚡ Recibido force_end_play, enviando respuestas y cambiando a score...');
-      socket.emit('send_responses', { roomId, playerId: userId, respuestas });
+    const handleForceEndPlay = () => {
+      if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+      }
+      console.log('⚡ force_end_play recibido por', userId, 'isHost:', isHost);
+      socket.emit('send_responses', { roomId, playerId: userId, respuestas: respuestasRef.current });
       socket.emit('change_phase', { roomId, phase: 'score' });
-    });
-  
-    return () => {
-      socket.off('force_end_play');
-    }
-  }, [roomId, userId, respuestas])
-  
+    };
+
+    socket.on('force_end_play', handleForceEndPlay);
+
+    return () => socket.off('force_end_play', handleForceEndPlay);
+  }, [roomId, userId]); 
   
 
   return (

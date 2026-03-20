@@ -16,6 +16,9 @@ export const userSlice = createSlice({
         },
         clearUser: (state) => {
             state.userName = '';
+            state.isHost = false;
+            state.points = 0;
+            state.userId = '';
         },
         setIsHost: (state, action) => {
             state.isHost = action.payload;

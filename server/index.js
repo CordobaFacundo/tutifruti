@@ -13,8 +13,9 @@ const {
   removePlayerFromRoom,
   reassignHostIfNeeded,
   isRoomEmpty,
+  getSanitizedPlayers,
 } = require('./utils/roomUtils');
-const { clear } = require('console');
+
 
 //Configurar servidor Express
 const app = express();
@@ -39,33 +40,6 @@ io.on('connection', (socket) => {
 
   registerRoomEvents({ io, socket, rooms });
 
-
-
-  // Evento para unirse a una sala
-  socket.on('join_room', ({roomId, name}) => {
-    socket.join(roomId);
-    console.log(`${name} (${socket.id}) se unió a la sala: ${roomId}`);
-
-    //Aseguramos que exista la sala
-    if (!playersPerRoom[roomId]) {
-      playersPerRoom[roomId] = {
-        players: [],
-        timer: {
-          timeoutId: null,
-          endsAt: null,
-          duration: 90
-        }
-      };
-    }
-
-    const exists = playersPerRoom[roomId].players.some(p => p.id === socket.id);
-    if (!exists) {
-      playersPerRoom[roomId].players.push({ id: socket.id, name, points: 0 });
-    }
-
-    // Emitir un evento a todos los jugadores en la sala
-    io.to(roomId).emit('players_updated', playersPerRoom[roomId].players);
-  });
 
   socket.on('start_game', (roomId) => {
     const room = rooms[roomId];
@@ -183,7 +157,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('new_round', ({ roomId }) => {
-    const room = playersPerRoom[roomId];
+    const room = rooms[roomId];
     if (!room) return;
 
     if (room.hostId !== socket.id) {

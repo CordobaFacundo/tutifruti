@@ -9,27 +9,27 @@ const {
 } = require('../utils/roomUtils');
 
 const registerRoomEvents = ({ io, socket, rooms }) => {
-  socket.on('create-room', () => {
+  socket.on('create_room', () => {
     try {
       const roomId = generateRoomId(rooms);
       rooms[roomId] = createRoom(roomId, socket.id);
 
       console.log(`🏠 Sala creada: ${roomId} | host provisional: ${socket.id}`);
 
-      socket.emit('room-created', { roomId });
+      socket.emit('room_created', { roomId });
     } catch (error) {
       console.error('Error al crear sala:', error);
-      socket.emit('room-error', {
+      socket.emit('room_error', {
         message: 'No se pudo crear la sala. Probá de nuevo.',
       });
     }
   });
 
-  socket.on('validate-room', ({ roomId }) => {
+  socket.on('validate_room', ({ roomId }) => {
     const normalizedRoomId = String(roomId || '').trim();
 
     if (!/^\d{4}$/.test(normalizedRoomId)) {
-      socket.emit('room-error', {
+      socket.emit('room_error', {
         message: 'El código de sala debe tener 4 dígitos.',
       });
       return;
@@ -38,13 +38,13 @@ const registerRoomEvents = ({ io, socket, rooms }) => {
     const room = getRoom(rooms, normalizedRoomId);
 
     if (!room) {
-      socket.emit('room-error', {
+      socket.emit('room_error', {
         message: 'La sala no existe.',
       });
       return;
     }
 
-    socket.emit('room-validated', { roomId: normalizedRoomId });
+    socket.emit('room_validated', { roomId: normalizedRoomId });
   });
 
   socket.on('join_room', ({ roomId, name }) => {
@@ -52,24 +52,24 @@ const registerRoomEvents = ({ io, socket, rooms }) => {
     const normalizedName = String(name || '').trim();
 
     if (!normalizedRoomId) {
-      socket.emit('room-error', { message: 'Falta el código de sala.' });
+      socket.emit('room_error', { message: 'Falta el código de sala.' });
       return;
     }
 
     if (!normalizedName) {
-      socket.emit('room-error', { message: 'Ingresá un nombre válido.' });
+      socket.emit('room_error', { message: 'Ingresá un nombre válido.' });
       return;
     }
 
     const room = getRoom(rooms, normalizedRoomId);
 
     if (!room) {
-      socket.emit('room-error', { message: 'La sala no existe.' });
+      socket.emit('room_error', { message: 'La sala no existe.' });
       return;
     }
 
     if (isPlayerNameTaken(room, normalizedName)) {
-      socket.emit('room-error', {
+      socket.emit('room_error', {
         message: 'Ese nombre ya está en uso dentro de la sala.',
       });
       return;
@@ -77,7 +77,7 @@ const registerRoomEvents = ({ io, socket, rooms }) => {
 
     const existingPlayer = getPlayerFromRoom(room, socket.id);
     if (existingPlayer) {
-      socket.emit('room-joined', {
+      socket.emit('room_joined', {
         roomId: normalizedRoomId,
         user: {
           id: existingPlayer.id,
@@ -105,7 +105,7 @@ const registerRoomEvents = ({ io, socket, rooms }) => {
       `👤 ${normalizedName} (${socket.id}) se unió a la sala ${normalizedRoomId} | host: ${isHost}`
     );
 
-    socket.emit('room-joined', {
+    socket.emit('room_joined', {
       roomId: normalizedRoomId,
       user: {
         id: player.id,

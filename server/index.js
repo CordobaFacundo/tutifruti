@@ -19,15 +19,21 @@ const {
 
 //Configurar servidor Express
 const app = express();
-app.use(cors());
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+app.use(cors({
+  origin: CLIENT_URL,
+  methods: ['GET', 'POST'],
+  credentials: true,
+}));
 
 const server = http.createServer(app);
 
 //Inicializar Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: CLIENT_URL,
+    methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
@@ -172,14 +178,6 @@ io.on('connection', (socket) => {
 
     clearRoomTimer(room);
     room.timer.endsAt = Date.now() + room.timer.duration * 1000;
-    
-
-    /*Limpiar timer por si acaso
-    if (room.timer.timeoutId) {
-      clearTimeout(room.timer.timeoutId);
-      room.timer.timeoutId = null;
-    } */
-
 
     room.timer.timeoutId = setTimeout(() => {
       console.log(`⏰ Tiempo terminado para la sala ${roomId}`);
@@ -269,7 +267,8 @@ io.on('connection', (socket) => {
   });
 });
 
-//Levantar el servidor en el puerto 3001
-server.listen(3001, () => {
-  console.log('🚀 Servidor escuchando en http://localhost:3001');
+const PORT = process.env.PORT || 3001;
+
+server.listen(PORT, () => {
+  console.log(`🚀 Servidor escuchando en http://localhost:${PORT}`);
 });

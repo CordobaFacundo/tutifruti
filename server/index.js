@@ -26,6 +26,10 @@ app.use(cors({
   credentials: true,
 }));
 
+app.get('/', (_req, res) => {
+  res.status(200).send('Tutifruti futbolero backend OK 🚀');
+});
+
 const server = http.createServer(app);
 
 //Inicializar Socket.IO

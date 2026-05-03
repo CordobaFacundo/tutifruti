@@ -11,6 +11,7 @@ export const ScorePhase = ({
   handleScore,
   isHost
 }) => {
+  const hasScoredAllResponses = campos.every((_, index) => pointsFields[index] === true);
 
   return (
     <div className="container mt-4">
@@ -106,7 +107,7 @@ export const ScorePhase = ({
         <button
           className="btn btn-primary w-100 mt-3"
           onClick={handleSendPoints}
-          disabled={pointsFields.filter((v) => v != null).length < campos.length}
+          disabled={!hasScoredAllResponses}
         >
           Confirmar puntos
         </button>

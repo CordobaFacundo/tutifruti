@@ -1,11 +1,15 @@
 import { useEffect } from 'react'
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import socket from '../socket/socket';
+import { setPlayers } from '../store/playersSlice';
+import { clearRoomId } from '../store/roomSlice';
+import { clearUser, setIsHost } from '../store/userSlice';
 
 export const Lobby = () => {
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { roomId } = useParams();
   const { userName, isHost, userId } = useSelector((state) => state.user);
   const players = useSelector((state) => state.players.players);
@@ -14,15 +18,35 @@ export const Lobby = () => {
     socket.emit('start_game', roomId);
   }
 
+  const leaveRoom = () => {
+    dispatch(clearUser());
+    dispatch(clearRoomId());
+    dispatch(setPlayers([]));
+    navigate('/room-access', { replace: true });
+  };
+
+  const handleLeaveRoom = () => {
+    socket.emit('leave_room', { roomId });
+    leaveRoom();
+  };
+
   useEffect(() => {
-    socket.on('navigate_to_game', () => {
+    const handleNavigateToGame = () => {
       navigate(`/sala/${roomId}/game`);
-    });
+    };
+
+    const handleHostAssigned = ({ hostId }) => {
+      dispatch(setIsHost(hostId === userId));
+    };
+
+    socket.on('navigate_to_game', handleNavigateToGame);
+    socket.on('host_assigned', handleHostAssigned);
   
     return () => {
-      socket.off('navigate_to_game');
+      socket.off('navigate_to_game', handleNavigateToGame);
+      socket.off('host_assigned', handleHostAssigned);
     }
-  }, [navigate, roomId]);
+  }, [dispatch, navigate, roomId, userId]);
   
 
   return (
@@ -52,10 +76,14 @@ export const Lobby = () => {
           </div>
 
           {isHost && (
-            <button className="btn btn-success w-100" onClick={handleStart}>
+            <button className="btn btn-success w-100 mb-2" onClick={handleStart}>
               Iniciar partida
             </button>
           )}
+
+          <button className="btn btn-danger w-100" onClick={handleLeaveRoom}>
+            abandonar sala
+          </button>
         </div>
       </div>
     </div>

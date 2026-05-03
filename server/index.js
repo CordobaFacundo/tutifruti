@@ -50,6 +50,41 @@ io.on('connection', (socket) => {
 
   registerRoomEvents({ io, socket, rooms });
 
+  const removePlayerAndNotifyRoom = (roomId, reason) => {
+    const room = rooms[roomId];
+    if (!room) return false;
+
+    const removedPlayer = removePlayerFromRoom(room, socket.id);
+
+    if (!removedPlayer) return false;
+
+    console.log(
+      `Jugador ${removedPlayer.name} eliminado de la sala ${roomId} (${reason})`
+    );
+
+    const previousHostId = room.hostId;
+    const newHostId = reassignHostIfNeeded(room);
+
+    if (isRoomEmpty(room)) {
+      console.log(`La sala ${roomId} esta vacia. Eliminando sala.`);
+
+      clearRoomTimer(room);
+      delete rooms[roomId];
+      delete currentLetterPerRoom[roomId];
+      delete letterHistoryPerRoom[roomId];
+      return true;
+    }
+
+    if (previousHostId !== newHostId && newHostId) {
+      console.log(`Host reasignado en sala ${roomId}: ${newHostId}`);
+      io.to(newHostId).emit('host_assigned', { roomId, hostId: newHostId });
+    }
+
+    io.to(roomId).emit('players_updated', getSanitizedPlayers(room));
+
+    return true;
+  };
+
 
   socket.on('start_game', (roomId) => {
     const room = rooms[roomId];
@@ -232,6 +267,15 @@ io.on('connection', (socket) => {
     cb(currentLetterPerRoom[roomId] || '');
   })
 
+  socket.on('leave_room', ({ roomId }) => {
+    const normalizedRoomId = String(roomId || '').trim();
+
+    if (!normalizedRoomId) return;
+
+    socket.leave(normalizedRoomId);
+    removePlayerAndNotifyRoom(normalizedRoomId, 'abandono voluntario');
+  });
+
   //Evento para cuando se desconecta un jugador
   socket.on('disconnect', () => {
     console.log('❌ Jugador desconectado:', socket.id);
@@ -239,34 +283,7 @@ io.on('connection', (socket) => {
     const roomId = findRoomIdBySocketId(rooms, socket.id);
     if (!roomId) return;
 
-    const room = rooms[roomId];
-    if (!room) return;
-
-    const removedPlayer = removePlayerFromRoom(room, socket.id);
-
-    if (removedPlayer) {
-      console.log(`Jugador ${removedPlayer.name} eliminado de la sala ${roomId}`);
-    }
-
-    const previousHostId = room.hostId;
-    const newHostId = reassignHostIfNeeded(room);
-
-    if (isRoomEmpty(room)) {
-      console.log(`La sala ${roomId} está vacía. Eliminando sala.`);
-
-      clearRoomTimer(room);
-      delete rooms[roomId];
-      delete currentLetterPerRoom[roomId];
-      delete letterHistoryPerRoom[roomId];
-      return;
-    }
-
-    if (previousHostId !== newHostId && newHostId) {
-      console.log(`Host reasignado en sala ${roomId}: ${newHostId}`);
-      io.to(newHostId).emit('host_assigned', { roomId, hostId: newHostId });
-    }
-
-    io.to(roomId).emit('players_updated', getSanitizedPlayers(room));
+    removePlayerAndNotifyRoom(roomId, 'desconexion');
 
   });
 });

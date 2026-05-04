@@ -41,8 +41,6 @@ const io = new Server(server, {
   },
 });
 
-const letterHistoryPerRoom = {}; 
-const currentLetterPerRoom = {};
 
 //Evento de conexión de Socket.IO
 io.on('connection', (socket) => {
@@ -70,8 +68,7 @@ io.on('connection', (socket) => {
 
       clearRoomTimer(room);
       delete rooms[roomId];
-      delete currentLetterPerRoom[roomId];
-      delete letterHistoryPerRoom[roomId];
+
       return true;
     }
 
@@ -95,8 +92,8 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const letter = pickAndPushLetter(roomId, letterHistoryPerRoom);
-    currentLetterPerRoom[roomId] = letter;
+    const letter = pickAndPushLetter(room.letterHistory);
+    room.currentLetter = letter;
     room.phase = 'play';
     clearPlayersResponses(room);
 
@@ -210,8 +207,8 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const letter = pickAndPushLetter(roomId, letterHistoryPerRoom);
-    currentLetterPerRoom[roomId] = letter;
+    const letter = pickAndPushLetter(room.letterHistory);
+    room.currentLetter = letter;
     room.phase = 'play';
     clearPlayersResponses(room);
 
@@ -256,16 +253,17 @@ io.on('connection', (socket) => {
     room.phase = 'lobby';
     clearRoomTimer(room);
 
-    currentLetterPerRoom[roomId] = '';
-    letterHistoryPerRoom[roomId] = [];
+    room.currentLetter = '';
+    room.letterHistory = [];
 
     io.to(roomId).emit('players_updated', getSanitizedPlayers(room));
     io.to(roomId).emit('end_game');
   });
 
   socket.on('get_current_letter', (roomId, cb) => {
-    cb(currentLetterPerRoom[roomId] || '');
-  })
+    const room = rooms[roomId];
+    cb(room?.currentLetter || '');
+  });
 
   socket.on('leave_room', ({ roomId }) => {
     const normalizedRoomId = String(roomId || '').trim();

@@ -20,6 +20,8 @@ const createRoom = (roomId, hostSocketId) => {
     hostId: hostSocketId,
     phase: 'lobby',
     players: [],
+    currentLetter: '',
+    letterHistory: [],
     timer: {
       timeoutId: null,
       endsAt: null,

@@ -8,13 +8,16 @@ function getRandomLetter (letterHistory = []) {
     return randomLetter;
 }
 
-function pickAndPushLetter(roomId, letterHistoryPerRoom, maxHistory = 10) {
-    if (!letterHistoryPerRoom[roomId]) letterHistoryPerRoom[roomId] = [];
-    const history = letterHistoryPerRoom[roomId];
-    const letter = getRandomLetter(history);
-    history.push(letter);
-    if (history.length > maxHistory) history.shift();
-    return letter;   
+function pickAndPushLetter(letterHistory, maxHistory = 10) {
+    const letter = getRandomLetter(letterHistory);
+
+    letterHistory.push(letter);
+
+    if (letterHistory.length > maxHistory) {
+        letterHistory.shift();
+    }
+
+    return letter;
 }
 
 module.exports = { getRandomLetter, pickAndPushLetter };

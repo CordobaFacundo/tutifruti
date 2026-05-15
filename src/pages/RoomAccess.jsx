@@ -32,9 +32,10 @@ export const RoomAccess = () => {
       navigate(`/sala/${roomId}`);
     };
 
-    const handleRoomError = ({ message }) => {
+    const handleRoomError = ({ message, type }) => {
       setIsLoading(false);
-      toast.error(message, {
+      const showToast = type === 'warning' ? toast.warning : toast.error;
+      showToast(message, {
         position: 'bottom-right',
         autoClose: 2500,
         theme: 'dark',

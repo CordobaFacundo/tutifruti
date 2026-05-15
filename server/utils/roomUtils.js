@@ -1,3 +1,5 @@
+const MAX_PLAYERS_PER_ROOM = 8;
+
 const generateRoomId = (rooms) => {
   let roomId = '';
   let attempts = 0;
@@ -46,6 +48,11 @@ const isPlayerNameTaken = (room, name) => {
   return room.players.some(
     (player) => normalizeName(player.name) === normalizedName
   );
+};
+
+const isRoomFull = (room) => {
+  if (!room) return false;
+  return room.players.length >= MAX_PLAYERS_PER_ROOM;
 };
 
 const addPlayerToRoom = (room, player) => {
@@ -143,11 +150,13 @@ const findRoomIdBySocketId = (rooms, socketId) => {
 };
 
 module.exports = {
+  MAX_PLAYERS_PER_ROOM,
   generateRoomId,
   createRoom,
   getRoom,
   getPlayerFromRoom,
   isPlayerNameTaken,
+  isRoomFull,
   addPlayerToRoom,
   removePlayerFromRoom,
   getSanitizedPlayers,

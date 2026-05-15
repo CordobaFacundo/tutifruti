@@ -4,6 +4,7 @@ const {
   getRoom,
   getPlayerFromRoom,
   isPlayerNameTaken,
+  isRoomFull,
   addPlayerToRoom,
   getSanitizedPlayers,
 } = require('../utils/roomUtils');
@@ -44,6 +45,14 @@ const registerRoomEvents = ({ io, socket, rooms }) => {
       return;
     }
 
+    if (isRoomFull(room)) {
+      socket.emit('room_error', {
+        message: 'La sala está llena. Máximo 8 jugadores.',
+        type: 'warning',
+      });
+      return;
+    }
+
     socket.emit('room_validated', { roomId: normalizedRoomId });
   });
 
@@ -68,13 +77,6 @@ const registerRoomEvents = ({ io, socket, rooms }) => {
       return;
     }
 
-    if (isPlayerNameTaken(room, normalizedName)) {
-      socket.emit('room_error', {
-        message: 'Ese nombre ya está en uso dentro de la sala.',
-      });
-      return;
-    }
-
     const existingPlayer = getPlayerFromRoom(room, socket.id);
     if (existingPlayer) {
       socket.emit('room_joined', {
@@ -84,6 +86,21 @@ const registerRoomEvents = ({ io, socket, rooms }) => {
           name: existingPlayer.name,
           isHost: existingPlayer.isHost,
         },
+      });
+      return;
+    }
+
+    if (isRoomFull(room)) {
+      socket.emit('room_error', {
+        message: 'La sala está llena. Máximo 8 jugadores.',
+        type: 'warning',
+      });
+      return;
+    }
+
+    if (isPlayerNameTaken(room, normalizedName)) {
+      socket.emit('room_error', {
+        message: 'Ese nombre ya está en uso dentro de la sala.',
       });
       return;
     }
